@@ -8,6 +8,13 @@
 ### Why use this script?
 The primary reason to use this script is to enable centralized, multi-account monitoring in AWS. You may choose to do this via the AWS console, but the process involves multiple steps that can be prone to human error. Additionally, this process must be repeated in each AWS region you wish to collect metrics in. This script will automate the process and deploy the necessary resources in each region you specify (or all AWS default regions) for a quick and seamless onboarding to AWS Centralized CloudWatch Monitoring.
 
+### Alternative ways to achieve multi-account monitoring (and why this is better)
+There are multiple ways to achieve centralized monitoring in AWS. If you do not need to use the CloudWatch APIs, you can set up a
+multi-account dashboard in the CloudWatch console, but you'll have to manually select and repeat this process for relevant metrics and resources. The advantage to using this script is that it will enable you to centralize, collect and report on any (standard) AWS metric for any resource you have access to.
+
+### Ongoing maintenance
+By leveraging CloudFormation StackSets and AWS Organizations you greatly reduce your ongoing burden to maintain centralized monitoring. As you add and delete accounts in your organization, new Stacks creating links to your centralized sink will automatically be created and destroyed on a per-region, per-account basis.
+
 ### Prerequisites:
 - [`Python3`](https://www.python.org/downloads/) (We're using 3.11)
 - `Pip3` (Comes standard with Python > 3.4)
