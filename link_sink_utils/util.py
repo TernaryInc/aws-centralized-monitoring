@@ -25,8 +25,8 @@ def create_sink(region, profile, sink_name, organization):
         sink = client.create_sink(
             Name=sink_name
         )
-    except Exception:
-        raise Exception('creating sink')
+    except Exception as e:
+        raise Exception('creating sink') from e
     
     # Put organization in the policy string
     formatted_policy = policy % organization
@@ -37,8 +37,8 @@ def create_sink(region, profile, sink_name, organization):
             SinkIdentifier=sink['Arn'],
             Policy=formatted_policy
         )
-    except Exception:
-        raise Exception('adding policy to sink')
+    except Exception as e:
+        raise Exception('adding policy to sink') from e
     
     return sink['Arn']
 
@@ -50,14 +50,14 @@ def create_stackset(region, profile, sink_arn, organization_unit, stack_set_name
     # Get account ID from caller identity
     try:
         account_id = get_client(profile, 'sts', region).get_caller_identity()['Account']
-    except Exception:
-        raise Exception('get account id')
+    except Exception as e:
+        raise Exception('get account id') from e
 
     # Execute template
     try:
         rendered_template = render_template(monitoring_account_id=account_id, sink_arn=sink_arn)
-    except Exception:
-        raise('rendering template')
+    except Exception as e:
+        raise('rendering template') from e
     
     # Create stackset
     try:
@@ -71,8 +71,8 @@ def create_stackset(region, profile, sink_arn, organization_unit, stack_set_name
                 'RetainStacksOnAccountRemoval': False
             }
         )
-    except Exception:
-        raise('creating stack set')
+    except Exception as e:
+        raise('creating stack set') from e
 
     # Set DeploymentTargets
     deployment_targets={

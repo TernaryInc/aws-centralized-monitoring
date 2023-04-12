@@ -49,7 +49,7 @@ def monitoring_onboarding():
         try:
             sink_arn = util.create_sink(region=region, profile=profile, sink_name=sink_name, organization=organization)
         except Exception as err:
-            raise Exception(f'creating sink in {region}')
+            raise Exception(f'creating sink in {region}') from err
         print(f'successfully created sink in {region}')
         print(f'creating stackset and stacks in {region}')
         try:
