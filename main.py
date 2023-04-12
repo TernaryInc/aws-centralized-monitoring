@@ -9,7 +9,7 @@ parser.add_argument('--organization-unit', help="AWS Organization Unit that you 
 parser.add_argument('--sink-name', help="Human-friendly AWS Metric Sink Name, defaults to \"Centralized-Monitoring\"", type=str, required=False, default="Centralized-Monitoring")
 parser.add_argument('--profile', help="AWS CLI Config Profile Name for the Management Account, uses your default AWS profile if not specified", type=str, required=False, default=None)
 parser.add_argument('--regions', help="[Optional] List of regions to create a sink and StackSet in. If not specified, a Sink/StackSet will be created in all default AWS regions", type=str, required=False)
-parser.add_argument('--excluded-accounts', help="[Optional] List of accounts to exclude from centralized monitoring (ex. --exclude \"12345678910, 09876543210\"). Must exclude suspended accounts", type=str, required=False, default=None)
+parser.add_argument('--excluded-accounts', help="[Optional] List of accounts to exclude from centralized monitoring (ex. --exclude \"12345678910,09876543210\"). Must exclude suspended accounts", type=str, required=False, default=None)
 
 # AWS Default regions
 aws_default_regions = ["us-east-2", "us-east-1", "us-west-1", "us-west-2",
