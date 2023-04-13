@@ -42,9 +42,9 @@ options:
   --sink-name SINK_NAME
                         Human-friendly AWS Metric Sink Name, defaults to "Centralized-Monitoring"
   --profile PROFILE     AWS CLI Config Profile Name for the Management Account, uses your default AWS profile if not specified
-  --regions REGIONS     [Optional] List of regions to create a sink and StackSet in. If not specified, a Sink/StackSet will be created in all default AWS regions
+  --regions REGIONS     [Optional] List of comma-separated regions to create a sink and StackSet in. If not specified, a Sink/StackSet will be created in all default AWS regions
   --excluded-accounts EXCLUDED_ACCOUNTS
-                        [Optional] List of accounts to exclude from centralized monitoring (ex. --exclude "12345678910, 09876543210"). Must exclude suspended accounts
+                        [Optional] List of comma-separated accounts to exclude from centralized monitoring (ex. --exclude "12345678910,09876543210"). Must exclude suspended accounts
 ```
 - `organization`:
   - Navigate to [Organizations](https://us-east-1.console.aws.amazon.com/organizations/v2/home/accounts), click on Root, and get the string starting with o- from your organization ARN
