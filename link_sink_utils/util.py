@@ -1,5 +1,8 @@
-import boto3, os
+import os
+
+import boto3
 from jinja2 import Environment, FileSystemLoader, select_autoescape
+
 
 # Returns an instance of a client for a given service, in a given region, with a given profile
 def get_client(profile, service, region):
@@ -28,19 +31,41 @@ def create_sink(region, profile, sink_name, organization):
     except Exception as e:
         raise Exception('creating sink') from e
     
+    attach_policy_to_sink(region, profile, sink['Arn'], organization)
+    
+    return sink['Arn']
+
+def check_for_existing_sink(region, profile):
+    # Get OAM client
+    client = get_client(profile, 'oam', region)
+
+    # Get sink
+    try:
+        sinks = []
+        paginator = client.get_paginator('list_sinks')
+        for page in paginator.paginate():
+            sinks.extend(page.get('Items', []))
+        if len(sinks) == 0:
+            return None
+        return (sinks[0]['Arn'], sinks[0]['Name'])
+    except Exception as e:
+        raise Exception('get sink') from e
+
+def attach_policy_to_sink(region, profile, sink_arn, organization):
+    # Get OAM client
+    client = get_client(profile, 'oam', region)
+
     # Put organization in the policy string
     formatted_policy = policy % organization
 
     # Attach policy to sink
     try:
         client.put_sink_policy(
-            SinkIdentifier=sink['Arn'],
+            SinkIdentifier=sink_arn,
             Policy=formatted_policy
         )
     except Exception as e:
         raise Exception('adding policy to sink') from e
-    
-    return sink['Arn']
 
 # Creates a stackset and stack instances that create links to the created sink
 def create_stackset(region, profile, sink_arn, organization_unit, stack_set_name, excluded_accounts):
