@@ -1,9 +1,15 @@
-import boto3, os
+import os
+
+import boto3
 from jinja2 import Environment, FileSystemLoader, select_autoescape
+
 
 # Returns an instance of a client for a given service, in a given region, with a given profile
 def get_client(profile, service, region):
-    return boto3.Session(profile_name=profile, region_name=region).client(service)
+    if profile is None:
+        return boto3.Session(region_name=region).client(service)
+    else:
+        return boto3.Session(profile_name=profile, region_name=region).client(service)
 
 policy = """{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Principal":"*","Action":["oam:CreateLink","oam:UpdateLink"],"Resource":"*","Condition":{"ForAllValues:StringEquals":{"oam:ResourceTypes":"AWS::CloudWatch::Metric"},"ForAnyValue:StringEquals":{"aws:PrincipalOrgID":"%s"}}}]}"""
 
@@ -28,19 +34,54 @@ def create_sink(region, profile, sink_name, organization):
     except Exception as e:
         raise Exception('creating sink') from e
     
+    attach_policy_to_sink(region, profile, sink['Arn'], organization)
+    
+    return sink['Arn']
+
+def check_for_existing_sink(region, profile):
+    # Get OAM client
+    client = get_client(profile, 'oam', region)
+
+    # Get sink
+    try:
+        sinks = []
+        paginator = client.get_paginator('list_sinks')
+        for page in paginator.paginate():
+            sinks.extend(page.get('Items', []))
+        if len(sinks) == 0:
+            return None, None
+        return (sinks[0]['Arn'], sinks[0]['Name'])
+    except Exception as e:
+        raise Exception('get sink') from e
+
+def attach_policy_to_sink(region, profile, sink_arn, organization):
+    # Get OAM client
+    client = get_client(profile, 'oam', region)
+
     # Put organization in the policy string
     formatted_policy = policy % organization
 
     # Attach policy to sink
     try:
         client.put_sink_policy(
-            SinkIdentifier=sink['Arn'],
+            SinkIdentifier=sink_arn,
             Policy=formatted_policy
         )
     except Exception as e:
         raise Exception('adding policy to sink') from e
     
-    return sink['Arn']
+def check_for_existing_stackset(region, profile, stack_set_name):
+    # Get CFN Client
+    client = get_client(profile, 'cloudformation', region)
+    
+    # Get stackset
+    try:
+        stack_set = client.describe_stack_set(StackSetName=stack_set_name)
+        return stack_set['StackSet']['StackSetId']
+    except client.exceptions.StackSetNotFoundException:
+        return None
+    except Exception as e:
+        raise Exception('get stackset') from e
 
 # Creates a stackset and stack instances that create links to the created sink
 def create_stackset(region, profile, sink_arn, organization_unit, stack_set_name, excluded_accounts):
