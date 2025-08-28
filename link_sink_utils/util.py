@@ -6,7 +6,10 @@ from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 # Returns an instance of a client for a given service, in a given region, with a given profile
 def get_client(profile, service, region):
-    return boto3.Session(profile_name=profile, region_name=region).client(service)
+    if profile is None:
+        return boto3.Session(region_name=region).client(service)
+    else:
+        return boto3.Session(profile_name=profile, region_name=region).client(service)
 
 policy = """{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Principal":"*","Action":["oam:CreateLink","oam:UpdateLink"],"Resource":"*","Condition":{"ForAllValues:StringEquals":{"oam:ResourceTypes":"AWS::CloudWatch::Metric"},"ForAnyValue:StringEquals":{"aws:PrincipalOrgID":"%s"}}}]}"""
 
@@ -46,7 +49,7 @@ def check_for_existing_sink(region, profile):
         for page in paginator.paginate():
             sinks.extend(page.get('Items', []))
         if len(sinks) == 0:
-            return None
+            return None, None
         return (sinks[0]['Arn'], sinks[0]['Name'])
     except Exception as e:
         raise Exception('get sink') from e
@@ -66,6 +69,19 @@ def attach_policy_to_sink(region, profile, sink_arn, organization):
         )
     except Exception as e:
         raise Exception('adding policy to sink') from e
+    
+def check_for_existing_stackset(region, profile, stack_set_name):
+    # Get CFN Client
+    client = get_client(profile, 'cloudformation', region)
+    
+    # Get stackset
+    try:
+        stack_set = client.describe_stack_set(StackSetName=stack_set_name)
+        return stack_set['StackSet']['StackSetId']
+    except client.exceptions.StackSetNotFoundException:
+        return None
+    except Exception as e:
+        raise Exception('get stackset') from e
 
 # Creates a stackset and stack instances that create links to the created sink
 def create_stackset(region, profile, sink_arn, organization_unit, stack_set_name, excluded_accounts):
